@@ -1,4 +1,5 @@
 import turtle
+import collections
 
 INPUT_STR = "Hello world python cool hello"
 CIRCLE_RADIUS = 100
@@ -18,12 +19,9 @@ RAYS_CIRCLE_RADIUS = 2
 
 def get_uniq_words(str):
     words = str.split(" ")
-    uniq_words= dict()
+    uniq_words = collections.Counter()
     for word in words:
-        if word in uniq_words.keys():
-            uniq_words[word] += 1
-        else:
-            uniq_words[word] = 1
+        uniq_words[word] += 1
     return uniq_words
 
 
@@ -72,65 +70,69 @@ def draw_legend(uniq_words, t):
         step += 30
 
 
-def draw_diagram(str, diagr_type, t):
+def draw_sectors(str, t):
     draw_title(str, t)
     str = str.lower()
-    if diagr_type == 'sectors':
-        word_percentage = get_word_perc(str)
-        word_angle = dict()
-        for word, perc in word_percentage.items():
-            word_angle[word] = MAX_DEGREE*perc
 
-        t.color("black")
+    word_percentage = get_word_perc(str)
+    word_angle = dict()
+    for word, perc in word_percentage.items():
+        word_angle[word] = MAX_DEGREE*perc
+
+    t.color("black")
+    t.begin_fill()
+    t.circle(CIRCLE_RADIUS)
+    t.end_fill()
+
+    current_perc = 0
+    current_color = -1
+    for word_perc in word_angle.values():
+        current_perc += word_perc
+        current_color += 1
+        if current_color > len(COLORS):
+            current_color = 0
+        t.color(COLORS[current_color])
         t.begin_fill()
-        t.circle(CIRCLE_RADIUS)
+        t.circle(CIRCLE_RADIUS, word_perc)
+        t.goto(0,CIRCLE_RADIUS)
         t.end_fill()
+        t.penup()
+        t.home()
+        t.circle(CIRCLE_RADIUS, current_perc)
+    draw_legend(get_uniq_words(str), t)
 
-        current_perc = 0
-        current_color = -1
-        for word_perc in word_angle.values():
-            current_perc += word_perc
-            current_color += 1
-            if current_color > len(COLORS):
-                current_color = 0
-            t.color(COLORS[current_color])
-            t.begin_fill()
-            t.circle(CIRCLE_RADIUS, word_perc)
-            t.goto(0,CIRCLE_RADIUS)
-            t.end_fill()
-            t.penup()
-            t.home()
-            t.circle(CIRCLE_RADIUS, current_perc)
 
-    elif diagr_type == 'rays':
-        current_color = -1
-        uniq_words = get_uniq_words(str)
-        uniq_words_count = len(uniq_words)
-        i=0
-        for num in uniq_words.values():
-            t.home()
-            i += 1
-            current_color += 1
-            if current_color > len(COLORS):
-                current_color = 0
-            t.color(COLORS[current_color])
-            t.pendown()
-            t.rt(MAX_DEGREE/uniq_words_count*i)
-            for j in range(num):
-                t.fd(RAYS_LEN)
-                t.circle(RAYS_CIRCLE_RADIUS)
-            t.penup()
-
+def draw_rays(str, t):
+    draw_title(str, t)
+    str = str.lower()
+    current_color = -1
+    uniq_words = get_uniq_words(str)
+    uniq_words_count = len(uniq_words)
+    i=0
+    for num in uniq_words.values():
+        t.home()
+        i += 1
+        current_color += 1
+        if current_color > len(COLORS):
+            current_color = 0
+        t.color(COLORS[current_color])
+        t.pendown()
+        t.rt(MAX_DEGREE/uniq_words_count*i)
+        for j in range(num):
+            t.fd(RAYS_LEN)
+            t.circle(RAYS_CIRCLE_RADIUS)
+        t.penup()
     draw_legend(get_uniq_words(str), t)
 
 
 def init():
     wn = turtle.Screen()
     Turtle = turtle.Turtle()
-    draw_diagram(INPUT_STR, 'sectors', Turtle)
+    draw = dict(sectors=draw_sectors, rays=draw_rays)
+    draw['sectors'](INPUT_STR, Turtle)
     input()
     Turtle.clear()
-    draw_diagram(INPUT_STR, 'rays', Turtle)
+    draw['rays'](INPUT_STR, Turtle)
     input()
 
 if __name__ == "__main__":
